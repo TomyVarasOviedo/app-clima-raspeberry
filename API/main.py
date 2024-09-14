@@ -1,7 +1,12 @@
 import json
 import uuid
-from fastapi import FastAPI
+from typing import Annotated
+from fastapi import FastAPI, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from starlette.templating import Jinja2Templates
+import uvicorn
+
 from Models.Clima import Clima
 
 
@@ -14,6 +19,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+templates = Jinja2Templates(directory="../Client/templates")
 clima = Clima(API_KEY, 53, -0.12)
 
 """
@@ -21,10 +27,18 @@ clima = Clima(API_KEY, 53, -0.12)
 <-------RUTAS------>
 <------------------>
 """
-@app.get("/")
-def root():
-    return "Conexion correcta"
+@app.get("/", response_class=HTMLResponse)
+async def root(request:Request):
+    return templates.TemplateResponse(name="index.html",request=request)
 
 @app.get("/clima")
 async def obtener_clima_ubicacion():
     return clima.obtener_clima()
+
+@app.post("/display")
+async def set_display_clima(humedad:Annotated[str, Form()],temperatura:Annotated[str, Form()], dia:Annotated[str, Form()]):
+    return {
+        "humedad":humedad,
+        "temperatura":temperatura,
+        "dia":dia
+    }
